@@ -1,49 +1,38 @@
-require 'net/http'
-require 'cgi'
+require "net/http"
 
 module IqRdfStorage
   class VirtuosoAdaptor
 
-    def initialize(host, port=80, username=nil, password=nil)
-      @endpoint = "#{host}:#{port}/sparql"
+    def initialize(host, port, username, password)
+      @host = host
+      @port = port
       @username = username
       @password = password
     end
 
     def reset(uri)
-      return true # TODO
+      res = sparql("CLEAR GRAPH <#{uri}>") # XXX: s/CLEAR/DROP/ was rejected (405)
+      return res == "200" # XXX: always returns 409
     end
 
-    def update(uri, options)
+    def update(uri)
       reset(uri)
-      # Virtuoso pragmas for instructing SPARQL engine to perform an HTTP GET
-      # using the URI in as Data Source URL
-      query = "DEFINE get:soft \"replace\" SELECT DISTINCT * FROM <#{uri}> WHERE {?s ?p ?o}"
-      data = self.class.sparql_query(query, @endpoint) # TODO: error handling
+
+      res = sparql(%{LOAD "#{uri}" INTO GRAPH <#{uri}>})
+      return res == "200" # XXX: always returns 409
     end
 
-    def self.sparql_query(query, base_uri)
-      params = {
-        "default-graph" => "",
-        "should-sponge" => "soft",
-        "query" => query,
-        "debug" => "on",
-        "timeout" => "",
-        "format" => "application/json", # XXX: ?
-        "save" => "display",
-        "fname" => ""
-      }
+    def sparql(query)
+      path = "/DAV/home/#{@username}/rdf_sink" # XXX: shouldn't this be /sparql?
 
-      uri = base_uri + "?" + params.
-          map { |key, val| "#{CGI.escape(key)}=#{CGI.escape(val)}" }.join("&")
-      uri = URI.parse(uri)
-
-      req = Net::HTTP::Get.new(uri.to_s)
-      req.basic_auth(@username, @password) if @username || @password
+      uri = URI.parse("#{@host}:#{@port}#{path}")
+      req = Net::HTTP::Post.new(uri.to_s)
+      req.basic_auth(@username, @password)
       req["Content-Type"] = "application/sparql-query"
+      req.body = query
 
       res = Net::HTTP.new(uri.host, uri.port).request(req)
-      return res.code == "200"
+      return res.code
     end
 
   end
