@@ -4,12 +4,14 @@ require "iq_rdf_storage/virtuoso_adaptor"
 class VirtuosoTest < MiniTest::Unit::TestCase
 
   def setup
-    @adaptor = IqRdfStorage::VirtuosoAdaptor.new
+    @adaptor = IqRdfStorage::VirtuosoAdaptor.new "http://virtuoso.led.innoq.com"
   end
 
   def test_api
-    assert_nil @adaptor.reset("http://example.org")
-    assert_nil @adaptor.update("http://example.org", "lipsum")
+    uri = "http://try.iqvoc.net/model_building.rdf"
+
+    assert @adaptor.reset(uri)
+    assert @adaptor.update(uri, "lipsum")
   end
 
 end
