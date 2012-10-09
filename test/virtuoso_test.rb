@@ -39,7 +39,7 @@ class VirtuosoTest < MiniTest::Unit::TestCase
     EOS
     rdf_data.strip!
 
-    assert @adaptor.update(uri, rdf_data)
+    assert @adaptor.update(uri, rdf_data, "application/rdf+xml")
   end
 
 end

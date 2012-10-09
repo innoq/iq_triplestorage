@@ -18,11 +18,11 @@ module IqRdfStorage
     end
 
     # uses push method if `rdf_data` is provided, pull otherwise
-    def update(uri, rdf_data=nil)
+    def update(uri, rdf_data=nil, content_type=nil)
       reset(uri)
 
       if rdf_data
-        res = sparql_push(uri, rdf_data.strip)
+        res = sparql_push(uri, rdf_data.strip, content_type)
       else
         res = sparql_pull(%{LOAD "#{uri}" INTO GRAPH <#{uri}>})
       end
@@ -30,17 +30,20 @@ module IqRdfStorage
       return res
     end
 
-    def sparql_push(uri, rdf_data)
-      filename, _, extension = uri.rpartition(".")
-      filename = filename.gsub(/[^0-9A-Za-z]/, "_") # XXX: too simplistic?
-      path = "/DAV/home/#{@username}/rdf_sink/#{filename}.#{extension}"
+    def sparql_push(uri, rdf_data, content_type)
+      raise TypeError, "missing content type" unless content_type
+
+      filename = uri.gsub(/[^0-9A-Za-z]/, "_") # XXX: too simplistic?
+      path = "/DAV/home/#{@username}/rdf_sink/#{filename}"
+
       auth = Base64.encode64([@username, @password].join(":")).strip
+      headers = {
+        "Authorization" => "Basic #{auth}", # XXX: seems like this should be built into Typhoeus!?
+        "Content-Type" => content_type
+      }
 
       res = Typhoeus::Request.put("#{@host}:#{@port}#{path}",
-          :headers => {
-            "Authorization" => "Basic #{auth}" # XXX: seems like this should be built into Typhoeus!?
-          },
-          :body => rdf_data)
+          :headers => headers, :body => rdf_data)
 
       return res.code == 201
     end
