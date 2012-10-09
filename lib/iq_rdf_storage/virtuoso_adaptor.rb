@@ -31,8 +31,9 @@ module IqRdfStorage
     end
 
     def sparql_push(uri, rdf_data)
-      filename = uri.gsub(/[^0-9A-Za-z]/, "_") # XXX: too simplistic?
-      path = "/DAV/home/#{@username}/rdf_sink/#{filename}"
+      filename, _, extension = uri.rpartition(".")
+      filename = filename.gsub(/[^0-9A-Za-z]/, "_") # XXX: too simplistic?
+      path = "/DAV/home/#{@username}/rdf_sink/#{filename}.#{extension}"
       auth = Base64.encode64([@username, @password].join(":")).strip
 
       res = Typhoeus::Request.put("#{@host}:#{@port}#{path}",
