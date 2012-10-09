@@ -11,7 +11,6 @@ class VirtuosoTest < MiniTest::Unit::TestCase
   def test_pull
     uri = "http://try.iqvoc.net/model_building.rdf"
 
-    assert @adaptor.reset(uri)
     assert @adaptor.update(uri)
   end
 
@@ -40,7 +39,6 @@ class VirtuosoTest < MiniTest::Unit::TestCase
     EOS
     rdf_data.strip!
 
-    assert @adaptor.reset(uri)
     assert @adaptor.update(uri, rdf_data)
   end
 

@@ -1,4 +1,6 @@
-require "net/http"
+require 'net/http'
+require 'base64'
+require 'typhoeus'
 
 module IqRdfStorage
   class VirtuosoAdaptor
@@ -25,16 +27,21 @@ module IqRdfStorage
         res = sparql_pull(%{LOAD "#{uri}" INTO GRAPH <#{uri}>})
       end
 
-      return res == "200" # XXX: always returns 409
+      return res
     end
 
     def sparql_push(uri, rdf_data)
       filename = uri.gsub(/[^0-9A-Za-z]/, "_") # XXX: too simplistic?
       path = "/DAV/home/#{@username}/rdf_sink/#{filename}"
-      res = http_request("PUT", path, rdf_data, {
-        "Expect" => "100-continue"
-      })
-      return res.code
+      auth = Base64.encode64([@username, @password].join(":")).strip
+
+      res = Typhoeus::Request.put("#{@host}:#{@port}#{path}",
+          :headers => {
+            "Authorization" => "Basic #{auth}" # XXX: seems like this should be built into Typhoeus!?
+          },
+          :body => rdf_data)
+
+      return res.code == 201
     end
 
     def sparql_pull(query)
@@ -42,7 +49,7 @@ module IqRdfStorage
       res = http_request("POST", path, query, {
         "Content-Type" => "application/sparql-query"
       })
-      return res.code
+      return res.code == "200" # XXX: always returns 409
     end
 
     def http_request(method, path, body, headers={})
