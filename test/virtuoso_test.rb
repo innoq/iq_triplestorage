@@ -1,5 +1,5 @@
 require "minitest/autorun"
-require "iq_rdf_storage/virtuoso_adaptor"
+require "iq_triplestorage/virtuoso_adaptor"
 
 class VirtuosoTest < MiniTest::Unit::TestCase
 

@@ -2,7 +2,7 @@ require 'net/http'
 require 'base64'
 require 'typhoeus'
 
-module IqRdfStorage
+module IqTriplestorage
   class VirtuosoAdaptor
 
     def initialize(host, port, username, password)
