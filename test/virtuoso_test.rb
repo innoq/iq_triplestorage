@@ -1,23 +1,68 @@
+require 'base64'
 require "minitest/autorun"
+require 'webmock/test_unit'
+
 require "iq_triplestorage/virtuoso_adaptor"
 
 class VirtuosoTest < MiniTest::Unit::TestCase
 
   def setup
-    @adaptor = IqRdfStorage::VirtuosoAdaptor.new("http://virtuoso.led.innoq.com",
-        80, "dba", "...")
+    # HTTP request mocking
+    @observers = [] # one per request
+    WebMock.stub_request(:any, /.*example.org.*/).with do |req|
+      # not using WebMock's custom assertions as those didn't seem to provide
+      # sufficient flexibility
+      fn = @observers.shift
+      raise(TypeError, "missing request observer") unless fn
+      fn.call(req)
+      true
+    end
+
+    @username = "foo"
+    @password = "bar"
+    @host = "example.org"
+    @port = 80
+    @adaptor = IqTriplestorage::VirtuosoAdaptor.new("http://#{@host}", @port,
+        @username, @password)
+  end
+
+  def teardown
+    WebMock.reset!
+    raise(TypeError, "unhandled request observer") unless @observers.length == 0
+  end
+
+  def test_reset
+    uri = "http://example.com/foo"
+
+    @observers << lambda do |req|
+      ensure_basics(req)
+      assert_equal :post, req.method
+      assert_equal "/DAV/home/#{@username}/rdf_sink", req.uri.path
+      assert_equal "application/sparql-query", req.headers["Content-Type"]
+      assert_equal "CLEAR GRAPH <#{uri}>", req.body
+    end
+    @adaptor.reset(uri)
   end
 
   def test_pull
-    uri = "http://try.iqvoc.net/model_building.rdf"
+    uri = "http://example.com/bar"
 
-    assert @adaptor.update(uri)
+    @observers << lambda do |req|
+      assert_equal "CLEAR GRAPH <#{uri}>", req.body
+    end
+    @observers << lambda do |req|
+      assert_equal :post, req.method
+      assert_equal "/DAV/home/#{@username}/rdf_sink", req.uri.path
+      assert_equal "application/sparql-query", req.headers["Content-Type"]
+      assert_equal %(LOAD "#{uri}" INTO GRAPH <#{uri}>), req.body
+    end
+    @adaptor.update(uri)
   end
 
   def test_push
-    uri = "http://try.iqvoc.net/model_building.rdf"
+    uri = "http://example.com/baz"
 
-    rdf_data = <<-EOS
+    rdf_data = <<-EOS.strip
 <?xml version="1.0" encoding="UTF-8"?>
 <rdf:RDF xmlns="http://try.iqvoc.net/"
     xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
@@ -37,9 +82,31 @@ class VirtuosoTest < MiniTest::Unit::TestCase
   </rdf:Description>
 </rdf:RDF>
     EOS
-    rdf_data.strip!
 
-    assert @adaptor.update(uri, rdf_data, "application/rdf+xml")
+    @observers << lambda do |req|
+      assert_equal "CLEAR GRAPH <#{uri}>", req.body
+    end
+    @observers << lambda do |req|
+      assert_equal :put, req.method
+      assert req.uri.path.start_with?("/DAV/home/#{@username}/rdf_sink/")
+      assert_equal "application/rdf+xml", req.headers["Content-Type"]
+      assert_equal rdf_data, req.body
+    end
+    @adaptor.update(uri, rdf_data, "application/rdf+xml")
+  end
+
+  def ensure_basics(req) # TODO: rename
+    assert_equal "#{@host}:#{@port}", "#{req.uri.hostname}:#{req.uri.port}"
+
+    if auth_header = req.headers["Authorization"]
+      auth = Base64.encode64([@username, @password].join(":")).strip
+      assert_equal auth, auth_header
+    else
+      # MockWeb appears to prevent the Authorization header being set, instead
+      # retaining username and password in URI
+      assert req.uri.to_s.
+          start_with?("#{req.uri.scheme}://#{@username}:#{@password}@")
+    end
   end
 
 end
