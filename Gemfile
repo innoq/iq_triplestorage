@@ -1,7 +1,8 @@
 source :rubygems
 
+gemspec
+
 gem "rake"
-gem "typhoeus"
 
 group :test do
   gem "minitest"
