@@ -16,6 +16,8 @@ class VirtuosoTest < MiniTest::Unit::TestCase
       raise(TypeError, "missing request observer") unless fn
       fn.call(req)
       true
+    end.to_return do |req|
+      { :status => 201 }
     end
 
     @username = "foo"
@@ -93,6 +95,30 @@ class VirtuosoTest < MiniTest::Unit::TestCase
       assert_equal rdf_data, req.body
     end
     @adaptor.update(uri, rdf_data, "application/rdf+xml")
+  end
+
+  def test_batch
+    data = {
+      "http://example.com/foo" => "<aaa> <bbb> <ccc> .\n<ddd> <eee> <fff> .",
+      "http://example.com/bar" => "<ggg> <hhh> <iii> .\n<jjj> <kkk> <lll> ."
+    }
+
+    @observers << lambda do |req|
+      data.keys.each do |graph_uri|
+        assert req.body.include?("CLEAR GRAPH <#{graph_uri}>")
+      end
+    end
+    @observers << lambda do |req|
+      data.each do |graph_uri, ntriples|
+        assert req.body.
+            include?(<<-EOS)
+INSERT IN GRAPH <#{graph_uri}> {
+#{ntriples}
+}
+            EOS
+      end
+    end
+    @adaptor.batch_update(data)
   end
 
   def ensure_basics(req) # TODO: rename
