@@ -17,7 +17,7 @@ class VirtuosoTest < MiniTest::Unit::TestCase
       fn.call(req)
       true
     end.to_return do |req|
-      { :status => 201 }
+      { :status => req.uri.to_s.end_with?("/rdf_sink") ? 200 : 201 }
     end
 
     @username = "foo"
@@ -43,7 +43,7 @@ class VirtuosoTest < MiniTest::Unit::TestCase
       assert_equal "application/sparql-query", req.headers["Content-Type"]
       assert_equal "CLEAR GRAPH <#{uri}>", req.body
     end
-    @adaptor.reset(uri)
+    assert @adaptor.reset(uri)
   end
 
   def test_pull
@@ -58,7 +58,7 @@ class VirtuosoTest < MiniTest::Unit::TestCase
       assert_equal "application/sparql-query", req.headers["Content-Type"]
       assert_equal %(LOAD "#{uri}" INTO GRAPH <#{uri}>), req.body
     end
-    @adaptor.update(uri)
+    assert @adaptor.update(uri)
   end
 
   def test_push
@@ -94,7 +94,7 @@ class VirtuosoTest < MiniTest::Unit::TestCase
       assert_equal "application/rdf+xml", req.headers["Content-Type"]
       assert_equal rdf_data, req.body
     end
-    @adaptor.update(uri, rdf_data, "application/rdf+xml")
+    assert @adaptor.update(uri, rdf_data, "application/rdf+xml")
   end
 
   def test_batch
@@ -118,7 +118,7 @@ INSERT IN GRAPH <#{graph_uri}> {
             EOS
       end
     end
-    @adaptor.batch_update(data)
+    assert @adaptor.batch_update(data)
   end
 
   def ensure_basics(req) # TODO: rename

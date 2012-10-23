@@ -13,8 +13,7 @@ module IqTriplestorage
     end
 
     def reset(uri)
-      res = sparql_pull("CLEAR GRAPH <#{uri}>") # XXX: s/CLEAR/DROP/ was rejected (405)
-      return res == "200" # XXX: always returns 409
+      return sparql_pull("CLEAR GRAPH <#{uri}>") # XXX: s/CLEAR/DROP/ was rejected (405)
     end
 
     # expects a hash of N-Triples by graph URI
