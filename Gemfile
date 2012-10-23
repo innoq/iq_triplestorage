@@ -1,5 +1,6 @@
-source "https://rubygems.org"
+source :rubygems
 
+gem "rake"
 gem "typhoeus"
 
 group :test do
