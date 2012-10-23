@@ -104,11 +104,17 @@ class VirtuosoTest < MiniTest::Unit::TestCase
     }
 
     @observers << lambda do |req|
+      assert_equal :put, req.method
+      assert req.uri.path.start_with?("/DAV/home/#{@username}/")
+      assert_equal "application/sparql-query", req.headers["Content-Type"]
       data.keys.each do |graph_uri|
         assert req.body.include?("CLEAR GRAPH <#{graph_uri}>")
       end
     end
     @observers << lambda do |req|
+      assert_equal :put, req.method
+      assert req.uri.path.start_with?("/DAV/home/#{@username}/")
+      assert_equal "application/sparql-query", req.headers["Content-Type"]
       data.each do |graph_uri, ntriples|
         assert req.body.
             include?(<<-EOS)
