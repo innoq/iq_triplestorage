@@ -13,7 +13,7 @@ class VirtuosoTest < MiniTest::Unit::TestCase
       # not using WebMock's custom assertions as those didn't seem to provide
       # sufficient flexibility
       fn = @observers.shift
-      raise(TypeError, "missing request observer") unless fn
+      raise(TypeError, "missing request observer: #{req.inspect}") unless fn
       fn.call(req)
       true
     end.to_return do |req|
@@ -90,7 +90,9 @@ class VirtuosoTest < MiniTest::Unit::TestCase
     end
     @observers << lambda do |req|
       assert_equal :put, req.method
-      assert req.uri.path.start_with?("/DAV/home/#{@username}/rdf_sink/")
+      path = req.uri.path
+      assert path.start_with?("/DAV/home/#{@username}/rdf_sink/")
+      assert_equal 5, path.count("/")
       assert_equal "application/rdf+xml", req.headers["Content-Type"]
       assert_equal rdf_data, req.body
     end
@@ -105,7 +107,9 @@ class VirtuosoTest < MiniTest::Unit::TestCase
 
     @observers << lambda do |req|
       assert_equal :put, req.method
-      assert req.uri.path.start_with?("/DAV/home/#{@username}/")
+      path = req.uri.path
+      assert path.start_with?("/DAV/home/#{@username}/")
+      assert_equal 4, path.count("/")
       assert_equal "application/sparql-query", req.headers["Content-Type"]
       data.keys.each do |graph_uri|
         assert req.body.include?("CLEAR GRAPH <#{graph_uri}>")
@@ -113,7 +117,9 @@ class VirtuosoTest < MiniTest::Unit::TestCase
     end
     @observers << lambda do |req|
       assert_equal :put, req.method
-      assert req.uri.path.start_with?("/DAV/home/#{@username}/")
+      path = req.uri.path
+      assert path.start_with?("/DAV/home/#{@username}/")
+      assert_equal 4, path.count("/")
       assert_equal "application/sparql-query", req.headers["Content-Type"]
       data.each do |graph_uri, ntriples|
         assert req.body.
