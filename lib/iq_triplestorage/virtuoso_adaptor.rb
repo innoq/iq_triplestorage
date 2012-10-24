@@ -6,6 +6,9 @@ module IqTriplestorage
   class VirtuosoAdaptor
 
     def initialize(host, port, username, password)
+      # validate to avoid nasty errors
+      raise(ArgumentError, "username must not be nil") if username.nil?
+
       @host = host
       @port = port
       @username = username
