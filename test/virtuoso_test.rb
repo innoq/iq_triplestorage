@@ -1,3 +1,5 @@
+require File.join(File.expand_path(File.dirname(__FILE__)), "test_helper")
+
 require "base64"
 require "minitest/autorun"
 require "webmock/test_unit"
