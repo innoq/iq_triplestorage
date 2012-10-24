@@ -1,6 +1,6 @@
-require 'base64'
+require "base64"
 require "minitest/autorun"
-require 'webmock/test_unit'
+require "webmock/test_unit"
 
 require "iq_triplestorage/virtuoso_adaptor"
 

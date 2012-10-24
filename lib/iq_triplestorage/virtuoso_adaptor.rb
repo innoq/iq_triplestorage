@@ -1,6 +1,6 @@
-require 'net/http'
-require 'base64'
-require 'typhoeus'
+require "net/http"
+require "base64"
+require "typhoeus"
 
 module IqTriplestorage
   class VirtuosoAdaptor
