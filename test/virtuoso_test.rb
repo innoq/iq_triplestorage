@@ -108,7 +108,7 @@ class VirtuosoTest < MiniTest::Unit::TestCase
     }
 
     @observers << lambda do |req|
-      assert_equal :put, req.method
+      assert_equal :post, req.method
       path = req.uri.path
       assert path.start_with?("/DAV/home/#{@username}/")
       assert_equal 4, path.count("/")
@@ -118,7 +118,7 @@ class VirtuosoTest < MiniTest::Unit::TestCase
       end
     end
     @observers << lambda do |req|
-      assert_equal :put, req.method
+      assert_equal :post, req.method
       path = req.uri.path
       assert path.start_with?("/DAV/home/#{@username}/")
       assert_equal 4, path.count("/")

@@ -62,7 +62,7 @@ module IqTriplestorage
         "Authorization" => "Basic #{auth}", # XXX: seems like this should be built into Typhoeus!?
         "Content-Type" => content_type
       }
-      res = Typhoeus::Request.put("#{@host}:#{@port}#{path}",
+      res = Typhoeus::Request.put("#{@host}:#{@port}#{path}", # XXX: is PUT correct here?
           :headers => headers, :body => rdf_data)
 
       return res.code == 201
@@ -87,7 +87,7 @@ module IqTriplestorage
         "Authorization" => "Basic #{auth}", # XXX: seems like this should be built into Typhoeus!?
         "Content-Type" => "application/sparql-query"
       }
-      res = Typhoeus::Request.put("#{@host}:#{@port}#{path}",
+      res = Typhoeus::Request.post("#{@host}:#{@port}#{path}",
           :headers => headers, :body => query)
 
       return res.code == 201
