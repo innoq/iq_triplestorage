@@ -1,6 +1,4 @@
 require "net/http"
-require "base64"
-require "typhoeus"
 
 module IqTriplestorage
   class VirtuosoAdaptor
@@ -57,15 +55,11 @@ module IqTriplestorage
       filename = uri.gsub(/[^0-9A-Za-z]/, "_") # XXX: too simplistic?
       path = "/DAV/home/#{@username}/rdf_sink/#{filename}"
 
-      auth = Base64.encode64([@username, @password].join(":")).strip
-      headers = {
-        "Authorization" => "Basic #{auth}", # XXX: seems like this should be built into Typhoeus!?
+      res = http_request("PUT", path, rdf_data, { # XXX: is PUT correct here?
         "Content-Type" => content_type
-      }
-      res = Typhoeus::Request.put("#{@host}:#{@port}#{path}", # XXX: is PUT correct here?
-          :headers => headers, :body => rdf_data)
+      })
 
-      return res.code == 201
+      return res.code == "201"
     end
 
     def sparql_pull(query)
@@ -79,21 +73,16 @@ module IqTriplestorage
     # query is a string or an array of strings
     def sparql_query(query)
       query = query.join("\n\n") + "\n" rescue query
-
       path = "/DAV/home/#{@username}/query"
 
-      auth = Base64.encode64([@username, @password].join(":")).strip
-      headers = {
-        "Authorization" => "Basic #{auth}", # XXX: seems like this should be built into Typhoeus!?
+      res = http_request("POST", path, query, {
         "Content-Type" => "application/sparql-query"
-      }
-      res = Typhoeus::Request.post("#{@host}:#{@port}#{path}",
-          :headers => headers, :body => query)
+      })
 
-      return res.code == 201
+      return res.code == "201"
     end
 
-    def http_request(method, path, body, headers={}) # TODO: switch to Typhoeus
+    def http_request(method, path, body, headers={})
       uri = URI.parse("#{@host}:#{@port}#{path}")
 
       req = Net::HTTP.const_get(method.downcase.capitalize).new(uri.to_s)
