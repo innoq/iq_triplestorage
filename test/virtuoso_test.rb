@@ -1,26 +1,17 @@
 require File.join(File.expand_path(File.dirname(__FILE__)), "test_helper")
 
 require "base64"
-require "minitest/autorun"
-require "webmock/test_unit"
 
 require "iq_triplestorage/virtuoso_adaptor"
 
-class VirtuosoTest < MiniTest::Unit::TestCase
+class VirtuosoTest < WebTestCase
 
   def setup
-    # HTTP request mocking
-    @observers = [] # one per request
-    WebMock.stub_request(:any, /.*example.org.*/).with do |req|
-      # not using WebMock's custom assertions as those didn't seem to provide
-      # sufficient flexibility
-      fn = @observers.shift
-      raise(TypeError, "missing request observer: #{req.inspect}") unless fn
-      fn.call(req)
-      true
-    end.to_return do |req|
-      { :status => req.uri.to_s.end_with?("/rdf_sink") ? 200 : 201 }
-    end
+    super
+    WebMock.stub_request(:any, /.*example.org.*/).with(&@request_handler).
+        to_return do |req|
+          { :status => req.uri.to_s.end_with?("/rdf_sink") ? 200 : 201 }
+        end
 
     @username = "foo"
     @password = "bar"
@@ -28,11 +19,6 @@ class VirtuosoTest < MiniTest::Unit::TestCase
     @port = 80
     @adaptor = IqTriplestorage::VirtuosoAdaptor.new("http://#{@host}", @port,
         @username, @password)
-  end
-
-  def teardown
-    WebMock.reset!
-    raise(TypeError, "unhandled request observer") unless @observers.length == 0
   end
 
   def test_reset
