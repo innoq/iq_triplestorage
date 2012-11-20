@@ -110,12 +110,11 @@ class VirtuosoTest < WebTestCase
       assert_equal 4, path.count("/")
       assert_equal "application/sparql-query", req.headers["Content-Type"]
       data.each do |graph_uri, ntriples|
-        assert req.body.
-            include?(<<-EOS)
+        assert req.body.include?(<<-EOS)
 INSERT IN GRAPH <#{graph_uri}> {
 #{ntriples}
 }
-            EOS
+        EOS
       end
     end
     assert @adaptor.batch_update(data)
