@@ -1,5 +1,5 @@
 module IqTriplestorage
-  VERSION = "0.2.0"
+  VERSION = "0.2.1"
 
   class BaseAdaptor
     attr_reader :host
