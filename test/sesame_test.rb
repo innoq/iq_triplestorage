@@ -13,31 +13,13 @@ class SesameTest < WebTestCase
           { :status => req.uri.to_s.end_with?("/rdf_sink") ? 200 : 201 }
         end
 
-    @username = "foo"
-    @password = "bar"
     @host = "http://example.org/sesame"
     @repo = "test"
+    @username = "foo"
+    @password = "bar"
 
-    @adaptor = IqTriplestorage::SesameAdaptor.new(@host, @repo,
+    @adaptor = IqTriplestorage::SesameAdaptor.new(@host, :repository => @repo,
         :username => @username, :password => @password)
-  end
-
-  def test_host_normalization
-    host = "http://example.org"
-    adaptor = IqTriplestorage::SesameAdaptor.new(host, "dummy")
-    assert_equal "/", adaptor.host.path
-
-    host = "http://example.org/"
-    adaptor = IqTriplestorage::SesameAdaptor.new(host, "dummy")
-    assert_equal "/", adaptor.host.path
-
-    host = "http://example.org/foo"
-    adaptor = IqTriplestorage::SesameAdaptor.new(host, "dummy")
-    assert_equal "/foo", adaptor.host.path
-
-    host = "http://example.org/foo/"
-    adaptor = IqTriplestorage::SesameAdaptor.new(host, "dummy")
-    assert_equal "/foo/", adaptor.host.path
   end
 
   def test_batch

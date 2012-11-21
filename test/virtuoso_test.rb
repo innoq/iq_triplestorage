@@ -13,12 +13,11 @@ class VirtuosoTest < WebTestCase
           { :status => req.uri.to_s.end_with?("/rdf_sink") ? 200 : 201 }
         end
 
+    @host = "http://example.org:8080"
     @username = "foo"
     @password = "bar"
-    @host = "example.org"
-    @port = 80
-    @adaptor = IqTriplestorage::VirtuosoAdaptor.new("http://#{@host}", @port,
-        @username, @password)
+    @adaptor = IqTriplestorage::VirtuosoAdaptor.new(@host,
+        :username => @username, :password => @password)
   end
 
   def test_reset
@@ -121,7 +120,7 @@ INSERT IN GRAPH <#{graph_uri}> {
   end
 
   def ensure_basics(req) # TODO: rename
-    assert_equal "#{@host}:#{@port}", "#{req.uri.hostname}:#{req.uri.port}"
+    assert_equal @host, "#{req.uri.scheme}://#{req.uri.hostname}:#{req.uri.port}"
 
     if auth_header = req.headers["Authorization"]
       auth = Base64.encode64([@username, @password].join(":")).strip

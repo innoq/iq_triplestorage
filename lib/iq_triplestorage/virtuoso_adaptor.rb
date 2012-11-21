@@ -1,16 +1,14 @@
 require "net/http"
 
+require "iq_triplestorage"
+
 module IqTriplestorage
-  class VirtuosoAdaptor
+  class VirtuosoAdaptor < IqTriplestorage::BaseAdaptor
 
-    def initialize(host, port, username, password)
+    def initialize(host, options={})
+      super
       # validate to avoid nasty errors
-      raise(ArgumentError, "username must not be nil") if username.nil?
-
-      @host = host
-      @port = port
-      @username = username
-      @password = password
+      raise(ArgumentError, "username must not be nil") if @username.nil?
     end
 
     def reset(uri)
@@ -80,17 +78,6 @@ module IqTriplestorage
       })
 
       return res.code == "201"
-    end
-
-    def http_request(method, path, body, headers={})
-      uri = URI.parse("#{@host}:#{@port}#{path}")
-
-      req = Net::HTTP.const_get(method.downcase.capitalize).new(uri.to_s)
-      req.basic_auth(@username, @password)
-      headers.each { |key, value| req[key] = value }
-      req.body = body
-
-      return Net::HTTP.new(uri.host, uri.port).request(req)
     end
 
   end
