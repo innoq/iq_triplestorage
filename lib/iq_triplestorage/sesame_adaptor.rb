@@ -20,7 +20,14 @@ class IqTriplestorage::SesameAdaptor < IqTriplestorage::BaseAdaptor
       "<#{graph_uri}> {\n#{ntriples}\n}\n"
     end.join("\n\n")
 
-    http_request("POST", path, data, { "Content-Type" => "application/x-trig" })
+    del_params = triples_by_graph.keys.
+        map { |graph| "context=#{CGI.escape(graph)}" }.join("&")
+    res = http_request("DELETE", "#{path}?#{del_params}")
+    return false unless res.code == "204"
+
+    res = http_request("POST", path, data,
+          { "Content-Type" => "application/x-trig" })
+    return res.code == "204"
   end
 
 end

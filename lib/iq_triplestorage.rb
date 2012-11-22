@@ -10,13 +10,13 @@ module IqTriplestorage
       @password = options[:password]
     end
 
-    def http_request(method, path, body, headers={})
+    def http_request(method, path, body=nil, headers={})
       uri = URI.join("#{@host}/", path)
 
       req = Net::HTTP.const_get(method.to_s.downcase.capitalize).new(uri.to_s)
       req.basic_auth(@username, @password) if (@username && @password)
       headers.each { |key, value| req[key] = value }
-      req.body = body
+      req.body = body if body
 
       return Net::HTTP.new(uri.host, uri.port).request(req)
     end
