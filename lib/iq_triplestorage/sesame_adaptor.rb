@@ -16,15 +16,15 @@ class IqTriplestorage::SesameAdaptor < IqTriplestorage::BaseAdaptor
     path = "/repositories/#{CGI.escape(@repo)}/statements"
     path = URI.join("#{@host}/", path[1..-1]).path
 
-    data = triples_by_graph.map do |graph_uri, ntriples|
-      "<#{graph_uri}> {\n#{ntriples}\n}\n"
-    end.join("\n\n")
-
     del_params = triples_by_graph.keys.
-        map { |graph| "context=#{CGI.escape(graph)}" }.join("&")
+        map { |graph| val = CGI.escape("<#{graph}>"); "context=#{val}" }.
+        join("&")
     res = http_request("DELETE", "#{path}?#{del_params}")
     return false unless res.code == "204"
 
+    data = triples_by_graph.map do |graph_uri, ntriples|
+      "<#{graph_uri}> {\n#{ntriples}\n}\n"
+    end.join("\n\n")
     res = http_request("POST", path, data,
           { "Content-Type" => "application/x-trig" })
     return res.code == "204"
